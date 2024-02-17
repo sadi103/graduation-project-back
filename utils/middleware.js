@@ -17,7 +17,7 @@ const errorHandler = (error, request, response, next) => {
 
   if (error.name === 'CastError') {
     return response.status(400).send({ error: 'malformatted id' })
-  } else if (error.name === 'ValidationError' || error.message.startsWith('password too short')) {
+  } else if (error.name === 'ValidationError' || error.message === 'All fields must be filled' || error.message === 'Email is not valid' || error.message === 'Password not strong enough') {
     return response.status(400).json({ error: error.message })
   } else if (error.name === 'JsonWebTokenError') {
     return response.status(401).json({ error: error.message })

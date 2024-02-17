@@ -24,7 +24,7 @@ blogRouter.post('/', async (request, response) => {
 
   // the token info should contain an id
   if (!decodedToken.id) {
-    return response .status(401).json({ error: 'token invalid' })
+    return response.status(401).json({ error: 'token invalid' })
   }
 
   const rootUser = await getRootUser()

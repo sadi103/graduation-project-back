@@ -28,7 +28,7 @@ beforeEach(async () => {
 
 describe('when there is initially one user in db', () => {
 
-  test('creation succeeds with a fresh username', async () => {
+  test('creation doesn\'t succeeds with a fresh username because password isn\'t strong', async () => {
     const usersAtStart = await usersInDb()
 
     const newUser = {
@@ -41,23 +41,24 @@ describe('when there is initially one user in db', () => {
     await api
       .post('/api/users')
       .send(newUser)
-      .expect(201)
+      .expect(400)
       .expect('Content-Type', /application\/json/)
 
     const usersAtEnd = await usersInDb()
-    expect(usersAtEnd).toHaveLength(usersAtStart.length + 1)
+    expect(usersAtEnd).toHaveLength(usersAtStart.length)
 
     const usernames = usersAtEnd.map(u => u.username)
-    expect(usernames).toContain(newUser.username)
+    expect(usernames).not.toContain(newUser.username)
   })
 
   test('creation fails with proper statuscode and message if username already taken', async () => {
     const usersAtStart = await usersInDb()
 
     const newUser = {
-      username: 'root',
       name: 'Superuser',
-      password: 'salainen',
+      username: 'root',
+      email: 'www@gmail.com',
+      password: 'Salainen324!!',
     }
 
     const result = await api
@@ -76,16 +77,19 @@ describe('when there is initially one user in db', () => {
     const usersAtBegging = await usersInDb()
 
     const newUser = {
-      username: 'dummy',
       name: 'dummy user',
+      username: 'dummy',
+      email: 'www@dummy.com',
       password: 'sa',
     }
 
-    await api
+    const result = await api
       .post('/api/users')
       .send(newUser)
       .expect(400)
       .expect('Content-Type', /application\/json/)
+
+    expect(result.body.error).toContain('Password not strong enough')
 
     const usersAtEnd = await usersInDb()
     expect(usersAtEnd).toHaveLength(usersAtBegging.length)
@@ -99,11 +103,13 @@ describe('when there is initially one user in db', () => {
       name: 'dummy user'
     }
 
-    await api
+    const result = await api
       .post('/api/users')
       .send(newUser)
       .expect(400)
       .expect('Content-Type', /application\/json/)
+
+    expect(result.body.error).toContain('All fields must be')
 
     const usersAtEnd = await usersInDb()
     expect(usersAtEnd).toHaveLength(usersAtBegging.length)
@@ -126,7 +132,7 @@ describe('when there is initially one user in db', () => {
   })
 
   test('unregistered user tries to login', async () => {
-    
+
     const unregisteredUser = {
       username: 'mluukkai',
       password: 'salainen',
@@ -137,7 +143,7 @@ describe('when there is initially one user in db', () => {
       .send(unregisteredUser)
       .expect(401)
       .expect('Content-Type', /application\/json/)
-    
+
     expect(response.body.error).toBe('invalid username or password')
   })
 
