@@ -41,4 +41,30 @@ blogRouter.post('/', async (request, response) => {
   response.status(201).end()
 })
 
+blogRouter.get('/', async (request, response) => {
+  const blogs = await Blog.find({})
+
+  response.status(200).json(blogs)
+})
+
+blogRouter.delete('/:id', async (request, response) => {
+  const id = request.params.id
+
+  const decodedToken = jwt.verify(getTokenFrom(request), process.env.SECRET)
+
+  if (!decodedToken.id) {
+    return response.status(401).json({ error: 'token invalid' })
+  }
+
+  const rootUser = await getRootUser()
+
+  // make sure that the id and username in the token belong to the root user, else fire an error
+  if ((decodedToken.username !== 'root') || (decodedToken.id !== rootUser.id)) {
+    return response.status(401).json({ error: 'only root user is allowed to create blogs' })
+  }
+
+  await Blog.findByIdAndDelete(id)
+  response.status(204).end()
+})
+
 module.exports = blogRouter
