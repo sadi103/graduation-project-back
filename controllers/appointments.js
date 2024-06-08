@@ -30,10 +30,10 @@ appointmentRouter.get('/', async (request, response) => {
   }
 
   if (decodedToken.username === 'root') {
-    const appointments = await Appointment.find({})
+    const appointments = await Appointment.find({}).populate('userId')
     return response.status(200).json(appointments)
   } else {
-    const appointment = await Appointment.find({ userId: decodedToken.id })
+    const appointment = await Appointment.find({ userId: decodedToken.id }).populate('userId')
     return response.status(200).json(appointment)
   }
 })
