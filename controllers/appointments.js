@@ -17,7 +17,9 @@ appointmentRouter.post('/', async (request, response) => {
   
   const savedAppointment = await newAppointment.save()
 
-  return response.status(201).json(savedAppointment)
+  const appointment = await Appointment.find({ _id: savedAppointment._id.toString() }).populate('userId')
+
+  return response.status(201).json(appointment)
 })
 
 appointmentRouter.get('/', async (request, response) => {
@@ -38,15 +40,25 @@ appointmentRouter.get('/', async (request, response) => {
   }
 })
 
-// appointmentRouter.get('/:id', async (request, response) => {
-//   const id = request.params.id
-//   const token = getToken(request.get('Authorization'))
+appointmentRouter.delete('/:id', async (request, response) => {
+  const appointmentId = request.params.id
+  const token = getToken(request.get('Authorization'))
 
-//   jwt.verify(token, process.env.SECRET)
+  const decodedToken = jwt.verify(token, process.env.SECRET)
 
-//   const appointments = await Appointment.find({})
+  if (!decodedToken.id) {
+    return response.status(401).json({ error: 'token invalid' })
+  }
 
-//   return response.status(200).json(appointments)
-// })
+  const appointment = await Appointment.findOne({ _id: appointmentId })
+
+  if ((decodedToken.id !== appointment.userId.toString()) && (decodedToken.username !== 'root')) {
+    return response.status(401).end()
+  }
+
+  const deletedAppointment = await Appointment.deleteOne({ _id: appointmentId })
+
+  return response.status(201).json(deletedAppointment)
+})
 
 module.exports = appointmentRouter
